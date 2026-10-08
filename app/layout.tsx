@@ -20,8 +20,8 @@ export const metadata: Metadata = {
     "The King's Barbershop — премиум-уход для мужчин: стрижки, оформление бороды, классическое бритьё. Онлайн-запись к лучшим барберам Самарканда.",
   generator: 'v0.app',
   icons: {
-    icon: '/images/logo.jpg',
-    apple: '/images/logo.jpg',
+    icon: '/images/logo-emblem.png',
+    apple: '/images/logo-emblem.png',
   },
 }
 
