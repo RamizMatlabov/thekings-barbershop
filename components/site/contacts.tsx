@@ -7,7 +7,7 @@ import { SectionHeading } from './section-heading'
 import { InstagramIcon, TelegramIcon } from './social-icons'
 
 const info = [
-  { icon: MapPin, label: 'Где мы находимся', value: ['Самарканд, Узбекистан'] },
+  { icon: MapPin, label: 'Где мы находимся', value: ['Самарканд, Узбекистан'], href: 'https://www.google.com/maps?q=39.674128,66.936907' },
   { icon: Clock, label: 'Режим работы', value: ['09:00 — 22:00', 'Каждый день'] },
   { icon: Phone, label: 'Телефон', value: ['+998 87 713 79 79'], href: 'tel:+998877137979' },
   { icon: InstagramIcon, label: 'Instagram', value: ['@thekings_barbershopp'], href: 'https://instagram.com/thekings_barbershopp' },
@@ -61,7 +61,7 @@ export function Contacts() {
           <Reveal delay={120} className="min-h-80 overflow-hidden border border-border">
             <iframe
               title="Карта: The King's Barbershop, Самарканд"
-              src="https://www.google.com/maps?q=Samarkand,Uzbekistan&z=14&output=embed"
+              src="https://www.google.com/maps?q=39.674128,66.936907&z=17&output=embed"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               className="size-full min-h-80 [filter:grayscale(1)_invert(0.92)_contrast(0.9)_sepia(0.25)]"
