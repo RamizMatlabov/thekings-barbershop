@@ -9,9 +9,9 @@ import { InstagramIcon, TelegramIcon } from './social-icons'
 const info = [
   { icon: MapPin, label: 'Где мы находимся', value: ['Самарканд, Узбекистан'] },
   { icon: Clock, label: 'Режим работы', value: ['09:00 — 22:00', 'Каждый день'] },
-  { icon: Phone, label: 'Телефон', value: ['+998 90 123 45 67'], href: 'tel:+998901234567' },
-  { icon: InstagramIcon, label: 'Instagram', value: ['@the_kings_barbershop'], href: 'https://instagram.com/the_kings_barbershop' },
-  { icon: TelegramIcon, label: 'Telegram', value: ['@the_kings_barbershop'], href: 'https://t.me/the_kings_barbershop' },
+  { icon: Phone, label: 'Телефон', value: ['+998 87 713 79 79'], href: 'tel:+998877137979' },
+  { icon: InstagramIcon, label: 'Instagram', value: ['@thekings_barbershopp'], href: 'https://instagram.com/thekings_barbershopp' },
+  { icon: TelegramIcon, label: 'Telegram', value: ['@amirjon707'], href: 'https://t.me/amirjon707' },
 ]
 
 const inputClass =

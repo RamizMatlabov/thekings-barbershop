@@ -20,8 +20,8 @@ export function Footer() {
         </nav>
         <div className="flex gap-3">
           {[
-            { href: 'https://instagram.com/the_kings_barbershop', label: 'Instagram', Icon: InstagramIcon },
-            { href: 'https://t.me/the_kings_barbershop', label: 'Telegram', Icon: TelegramIcon },
+            { href: 'https://instagram.com/thekings_barbershopp', label: 'Instagram', Icon: InstagramIcon },
+            { href: 'https://t.me/amirjon707', label: 'Telegram', Icon: TelegramIcon },
           ].map(({ href, label, Icon }) => (
             <a
               key={label}
