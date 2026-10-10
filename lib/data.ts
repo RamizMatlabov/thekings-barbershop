@@ -2,7 +2,6 @@ export const navLinks = [
   { href: '#home', label: 'Главная' },
   { href: '#about', label: 'О нас' },
   { href: '#services', label: 'Услуги' },
-  { href: '#gallery', label: 'Галерея' },
   { href: '#booking', label: 'Прайс' },
   { href: '#contacts', label: 'Контакты' },
 ]
@@ -74,31 +73,6 @@ export const barbers = [
   { id: 'dmitry', name: 'Дмитрий', role: 'Барбер', experience: 'Опыт: 4 года', image: '/images/barber-2.png' },
   { id: 'artem', name: 'Артём', role: 'Барбер', experience: 'Опыт: 3 года', image: '/images/barber-3.png' },
   { id: 'ivan', name: 'Иван', role: 'Барбер', experience: 'Опыт: 5 лет', image: '/images/barber-4.png' },
-]
-
-export type GalleryCategory = 'haircut' | 'beard' | 'shave' | 'interior' | 'details'
-
-export const galleryFilters: { id: 'all' | GalleryCategory; label: string }[] = [
-  { id: 'all', label: 'Все' },
-  { id: 'haircut', label: 'Стрижки' },
-  { id: 'beard', label: 'Борода' },
-  { id: 'shave', label: 'Бритьё' },
-  { id: 'interior', label: 'Интерьер' },
-  { id: 'details', label: 'Детали' },
-]
-
-export const galleryItems: { src: string; alt: string; category: GalleryCategory }[] = [
-  { src: '/images/barber-work.png', alt: 'Барбер делает стрижку клиенту', category: 'haircut' },
-  { src: '/images/service-haircut.png', alt: 'Мужская стрижка с фейдом', category: 'haircut' },
-  { src: '/images/tools.png', alt: 'Инструменты барбера', category: 'details' },
-  { src: '/images/service-shave.png', alt: 'Классическое бритьё опасной бритвой', category: 'shave' },
-  { src: '/images/hero.png', alt: 'Интерьер барбершопа', category: 'interior' },
-  { src: '/images/service-beard.png', alt: 'Оформление бороды', category: 'beard' },
-  { src: '/images/about.png', alt: 'Кресло барбера', category: 'interior' },
-  { src: '/images/products.png', alt: 'Средства для ухода', category: 'details' },
-  { src: '/images/interior-2.png', alt: 'Зеркала и лампы в зале', category: 'interior' },
-  { src: '/images/barber-3.png', alt: 'Ухоженная борода', category: 'beard' },
-  { src: '/images/service-styling.png', alt: 'Укладка волос', category: 'haircut' },
 ]
 
 export function formatPrice(service: Pick<Service, 'price' | 'priceFrom'>) {

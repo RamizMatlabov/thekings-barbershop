@@ -2,7 +2,6 @@ import { About } from '@/components/site/about'
 import { Booking } from '@/components/site/booking'
 import { Contacts } from '@/components/site/contacts'
 import { Footer } from '@/components/site/footer'
-import { Gallery } from '@/components/site/gallery'
 import { Header } from '@/components/site/header'
 import { Hero } from '@/components/site/hero'
 import { Services } from '@/components/site/services'
@@ -18,7 +17,6 @@ export default function Page() {
         <Services />
         <WhyUs />
         <Booking />
-        <Gallery />
         <Contacts />
       </main>
       <Footer />
