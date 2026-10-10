@@ -73,19 +73,19 @@ function buildMessage(data: BookingPayload) {
   const lines = [
     "✂️ Новая запись — The King's Barbershop",
     '',
-    `Клиент: ${data.name}`,
-    `Телефон: ${data.phone}`,
-    `Услуга: ${data.serviceTitle}`,
-    `Барбер: ${data.barberName}`,
-    `Дата: ${data.date}`,
-    `Время: ${data.time}`,
+    `👤 Клиент: ${data.name}`,
+    `📞 Телефон: ${data.phone}`,
+    `💇 Услуга: ${data.serviceTitle}`,
+    `💈 Барбер: ${data.barberName}`,
+    `📅 Дата: ${data.date}`,
+    `⏰ Время: ${data.time}`,
   ]
 
   if (data.duration != null) {
-    lines.push(`Длительность: ${data.duration} мин`)
+    lines.push(`⏱ Длительность: ${data.duration} мин`)
   }
   if (data.price != null) {
-    lines.push(`Цена: ${data.price.toLocaleString('ru-RU')} сум`)
+    lines.push(`💰 Цена: ${data.price.toLocaleString('ru-RU')} сум`)
   }
 
   return lines.join('\n')
