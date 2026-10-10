@@ -69,10 +69,8 @@ export const services: Service[] = [
 ]
 
 export const barbers = [
-  { id: 'alexey', name: 'Алексей', role: 'Топ-барбер', experience: 'Опыт: 6 лет', image: '/images/barber-1.png' },
-  { id: 'dmitry', name: 'Дмитрий', role: 'Барбер', experience: 'Опыт: 4 года', image: '/images/barber-2.png' },
-  { id: 'artem', name: 'Артём', role: 'Барбер', experience: 'Опыт: 3 года', image: '/images/barber-3.png' },
-  { id: 'ivan', name: 'Иван', role: 'Барбер', experience: 'Опыт: 5 лет', image: '/images/barber-4.png' },
+  { id: 'amir', name: 'Пардакулов Амир', role: 'Барбер', experience: 'Опыт: 4 лет', image: '/images/barber1.png' },
+  { id: 'daler', name: 'Хамидов Далер', role: 'Барбер', experience: 'Опыт: 14 лет', image: '/images/barber2.png' },
 ]
 
 export function formatPrice(service: Pick<Service, 'price' | 'priceFrom'>) {

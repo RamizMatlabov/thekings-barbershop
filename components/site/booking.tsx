@@ -224,7 +224,7 @@ export function Booking() {
           {step === 1 && (
             <fieldset>
               <legend className="mb-5 text-xs uppercase tracking-[0.2em] text-foreground/80">Выберите барбера</legend>
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <div className="mx-auto grid max-w-xl grid-cols-2 gap-4">
                 {barbers.map((b) => (
                   <button
                     key={b.id}
