@@ -44,6 +44,8 @@ export function Booking() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('+998 ')
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const dates = useMemo(buildDates, [])
 
@@ -53,6 +55,7 @@ export function Booking() {
       setServiceId(id)
       setStep(0)
       setSubmitted(false)
+      setSubmitError(null)
     }
     window.addEventListener(SELECT_SERVICE_EVENT, onSelect)
     return () => window.removeEventListener(SELECT_SERVICE_EVENT, onSelect)
@@ -72,8 +75,48 @@ export function Booking() {
   ][step]
 
   function next() {
-    if (step === 4) setSubmitted(true)
+    setSubmitError(null)
     setStep((s) => Math.min(s + 1, steps.length - 1))
+  }
+
+  async function confirmBooking() {
+    if (!barber || dateIndex === null || !time || submitting) return
+
+    setSubmitting(true)
+    setSubmitError(null)
+
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          serviceId: service.id,
+          serviceTitle: service.title,
+          barberId: barber.id,
+          barberName: barber.name,
+          date: longDate.format(dates[dateIndex]),
+          time,
+          name: name.trim(),
+          phone: phone.trim(),
+          duration: service.duration,
+          price: service.price,
+        }),
+      })
+
+      const data = (await res.json().catch(() => null)) as { success?: boolean; error?: string } | null
+
+      if (!res.ok || !data?.success) {
+        setSubmitError(data?.error || 'Не удалось отправить запись. Попробуйте ещё раз.')
+        return
+      }
+
+      setSubmitted(true)
+      setStep(5)
+    } catch {
+      setSubmitError('Ошибка сети. Проверьте подключение и попробуйте ещё раз.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   function reset() {
@@ -84,6 +127,8 @@ export function Booking() {
     setName('')
     setPhone('+998 ')
     setSubmitted(false)
+    setSubmitting(false)
+    setSubmitError(null)
   }
 
   return (
@@ -274,7 +319,7 @@ export function Booking() {
               className="mx-auto grid max-w-md gap-4"
               onSubmit={(e) => {
                 e.preventDefault()
-                if (canContinue) next()
+                if (canContinue) void confirmBooking()
               }}
             >
               <p className="text-xs uppercase tracking-[0.2em] text-foreground/80">Ваши контакты</p>
@@ -349,17 +394,40 @@ export function Booking() {
         </div>
 
         {step < 5 && (
-          <div className="mt-10 flex items-center justify-between">
-            {step > 0 ? (
-              <button type="button" onClick={() => setStep((s) => s - 1)} className={outlineBtn}>
-                Назад
-              </button>
-            ) : (
-              <span />
+          <div className="mt-10 flex flex-col gap-4">
+            {submitError && (
+              <p className="text-center text-sm text-red-400" role="alert">
+                {submitError}
+              </p>
             )}
-            <button type="button" onClick={next} disabled={!canContinue} className={primaryBtn}>
-              {step === 4 ? 'Подтвердить' : 'Далее'}
-            </button>
+            <div className="flex items-center justify-between">
+              {step > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubmitError(null)
+                    setStep((s) => s - 1)
+                  }}
+                  disabled={submitting}
+                  className={outlineBtn}
+                >
+                  Назад
+                </button>
+              ) : (
+                <span />
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  if (step === 4) void confirmBooking()
+                  else next()
+                }}
+                disabled={!canContinue || submitting}
+                className={primaryBtn}
+              >
+                {step === 4 ? (submitting ? 'Отправка…' : 'Подтвердить') : 'Далее'}
+              </button>
+            </div>
           </div>
         )}
       </div>
