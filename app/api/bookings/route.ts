@@ -11,6 +11,7 @@ import {
   isValidTimeSlot,
   slotOverlapsBusy,
 } from '@/lib/booking'
+import { formatPrice } from '@/lib/data'
 import { getDb } from '@/lib/db'
 import { bookings } from '@/lib/db/schema'
 
@@ -85,7 +86,7 @@ function buildMessage(params: {
   dateIso: string
   time: string
   duration: number
-  price: number
+  priceLabel: string
 }) {
   return [
     "✂️ Новая запись — The King's Barbershop",
@@ -97,7 +98,7 @@ function buildMessage(params: {
     `📅 Дата: ${formatDateRu(params.dateIso)}`,
     `⏰ Время: ${params.time}`,
     `⏱ Длительность: ${params.duration} мин`,
-    `💰 Цена: ${params.price.toLocaleString('ru-RU')} сум`,
+    `💰 Цена: ${params.priceLabel}`,
   ].join('\n')
 }
 
@@ -158,6 +159,7 @@ export async function GET(request: Request) {
         serviceTitle: service?.title ?? row.serviceId,
         barberName: barber?.name ?? row.barberId,
         price: service?.price ?? 0,
+        priceMax: service?.priceMax,
         priceFrom: service?.priceFrom ?? false,
         createdAt: row.createdAt.toISOString(),
       }
@@ -242,7 +244,7 @@ export async function POST(request: Request) {
           dateIso: data.date,
           time: data.time,
           duration: durationMinutes,
-          price: service.price,
+          priceLabel: formatPrice(service),
         }),
       }),
     })

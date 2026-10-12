@@ -13,14 +13,14 @@ export function selectService(id: string) {
 
 export function Services() {
   const [showAll, setShowAll] = useState(false)
-  const visible = showAll ? services : services.slice(0, 5)
+    const visible = showAll ? services : services.slice(0, 6)
 
   return (
     <section id="services" className="scroll-mt-20 border-y border-border/60 bg-card/40 py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <Reveal>
-            <SectionHeading>Наши услуги</SectionHeading>
+            <SectionHeading>Прайс лист</SectionHeading>
           </Reveal>
           <button
             type="button"
@@ -31,7 +31,7 @@ export function Services() {
           </button>
         </div>
 
-        <ul className={`mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 ${showAll ? 'lg:grid-cols-3' : 'lg:grid-cols-5'}`}>
+        <ul className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {visible.map((service, i) => (
             <Reveal as="li" key={service.id} delay={i * 90} className="h-full">
               <article className="group flex h-full flex-col border border-border bg-card transition-all duration-500 hover:-translate-y-1.5 hover:border-primary/60 hover:shadow-[0_20px_40px_-20px_rgba(201,164,108,0.35)]">

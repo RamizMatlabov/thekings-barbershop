@@ -34,6 +34,7 @@ type BookingListItem = {
   serviceTitle: string
   barberName: string
   price: number
+  priceMax?: number
   priceFrom: boolean
   createdAt: string
 }
@@ -679,7 +680,11 @@ export function Booking() {
                           <td className="px-4 py-3">{row.startTime}</td>
                           <td className="px-4 py-3 whitespace-nowrap">{row.durationMinutes} мин</td>
                           <td className="px-4 py-3 whitespace-nowrap text-primary">
-                            {formatPrice({ price: row.price, priceFrom: row.priceFrom })}
+                            {formatPrice({
+                              price: row.price,
+                              priceMax: row.priceMax,
+                              priceFrom: row.priceFrom,
+                            })}
                           </td>
                         </tr>
                       ))}
@@ -701,7 +706,11 @@ export function Booking() {
                           {formatDateRu(row.date)} · {row.startTime} · {row.durationMinutes} мин
                         </span>
                         <span className="text-primary">
-                          {formatPrice({ price: row.price, priceFrom: row.priceFrom })}
+                          {formatPrice({
+                            price: row.price,
+                            priceMax: row.priceMax,
+                            priceFrom: row.priceFrom,
+                          })}
                         </span>
                       </div>
                     </li>
