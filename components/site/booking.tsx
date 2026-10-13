@@ -86,6 +86,8 @@ export function Booking() {
   const [busyIntervals, setBusyIntervals] = useState<BusyInterval[]>([])
   const [busyLoading, setBusyLoading] = useState(false)
   const [busyError, setBusyError] = useState<string | null>(null)
+  const [dayBlocked, setDayBlocked] = useState(false)
+  const [blockedDates, setBlockedDates] = useState<Set<string>>(new Set())
   const [bookingList, setBookingList] = useState<BookingListItem[]>([])
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError] = useState<string | null>(null)
@@ -129,28 +131,69 @@ export function Booking() {
   }, [])
 
   useEffect(() => {
+    if (!barberId || (step !== 2 && step !== 3)) return
+
+    let cancelled = false
+    const from = toISODate(today)
+    const to = toISODate(maxDate)
+
+    fetch(
+      `/api/bookings?mode=blocks&barberId=${encodeURIComponent(barberId)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+    )
+      .then(async (res) => {
+        const data = (await res.json().catch(() => null)) as
+          | { success?: boolean; fullyBlockedDates?: string[]; error?: string }
+          | null
+        if (cancelled) return
+        if (!res.ok || !data?.success || !Array.isArray(data.fullyBlockedDates)) {
+          setBlockedDates(new Set())
+          return
+        }
+        setBlockedDates(new Set(data.fullyBlockedDates))
+      })
+      .catch(() => {
+        if (!cancelled) setBlockedDates(new Set())
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [barberId, step, today, maxDate])
+
+  useEffect(() => {
+    if (selectedDate && blockedDates.has(selectedDate)) {
+      setSelectedDate(null)
+      setTime(null)
+    }
+  }, [blockedDates, selectedDate])
+
+  useEffect(() => {
     if (step !== 3 || !barberId || !selectedDate) return
 
     let cancelled = false
     setBusyLoading(true)
     setBusyError(null)
+    setDayBlocked(false)
 
     fetch(`/api/bookings?barberId=${encodeURIComponent(barberId)}&date=${encodeURIComponent(selectedDate)}`)
       .then(async (res) => {
         const data = (await res.json().catch(() => null)) as
-          | { success?: boolean; bookings?: BusyInterval[]; error?: string }
+          | { success?: boolean; bookings?: BusyInterval[]; dayBlocked?: boolean; error?: string }
           | null
         if (cancelled) return
         if (!res.ok || !data?.success || !Array.isArray(data.bookings)) {
           setBusyIntervals([])
+          setDayBlocked(false)
           setBusyError(data?.error || 'Не удалось загрузить занятость')
           return
         }
         setBusyIntervals(data.bookings)
+        setDayBlocked(Boolean(data.dayBlocked))
       })
       .catch(() => {
         if (!cancelled) {
           setBusyIntervals([])
+          setDayBlocked(false)
           setBusyError('Ошибка сети при загрузке слотов')
         }
       })
@@ -203,7 +246,8 @@ export function Booking() {
 
   function isDayDisabled(d: Date) {
     const t = startOfDay(d).getTime()
-    return t < today.getTime() || t > maxDate.getTime()
+    if (t < today.getTime() || t > maxDate.getTime()) return true
+    return blockedDates.has(toISODate(d))
   }
 
   function next() {
@@ -265,6 +309,8 @@ export function Booking() {
     setSubmitError(null)
     setBusyIntervals([])
     setBusyError(null)
+    setDayBlocked(false)
+    setBlockedDates(new Set())
   }
 
   return (
@@ -369,6 +415,7 @@ export function Booking() {
                       setBarberId(b.id)
                       setSelectedDate(null)
                       setTime(null)
+                      setBlockedDates(new Set())
                     }}
                     aria-pressed={barberId === b.id}
                     className={cn(
@@ -493,10 +540,18 @@ export function Booking() {
                   {busyError}
                 </p>
               )}
+              {dayBlocked && !busyError && (
+                <p className="mb-4 text-center text-sm text-muted-foreground" role="status">
+                  Барбер недоступен в этот день
+                </p>
+              )}
               <div className="grid grid-cols-3 gap-3 sm:grid-cols-6 md:grid-cols-8">
                 {timeSlots.map((slot) => {
                   const busy =
-                    busyLoading || busyError != null || slotOverlapsBusy(slot, service.duration, busyIntervals)
+                    busyLoading ||
+                    busyError != null ||
+                    dayBlocked ||
+                    slotOverlapsBusy(slot, service.duration, busyIntervals)
                   return (
                     <button
                       key={slot}
