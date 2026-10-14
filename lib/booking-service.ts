@@ -8,7 +8,9 @@ import {
   formatDateRu,
   isDateBookable,
   isValidTimeSlot,
+  parseServiceIds,
   slotOverlapsBusy,
+  summarizeServices,
 } from '@/lib/booking'
 import { formatPrice } from '@/lib/data'
 import {
@@ -22,6 +24,7 @@ import { getDb } from '@/lib/db'
 import { availabilityBlocks, bookings } from '@/lib/db/schema'
 
 export type BookingPayload = {
+  /** Comma-separated service ids when several were chosen. */
   serviceId: string
   barberId: string
   date: string
@@ -34,6 +37,23 @@ export function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
 }
 
+function parseServiceIdsFromBody(body: Record<string, unknown>): string[] | null {
+  if (Array.isArray(body.serviceIds)) {
+    const ids = body.serviceIds
+      .filter((id): id is string => typeof id === 'string')
+      .map((id) => id.trim())
+      .filter(Boolean)
+    return ids.length > 0 ? parseServiceIds(ids.join(',')) : null
+  }
+
+  if (isNonEmptyString(body.serviceId)) {
+    const ids = parseServiceIds(body.serviceId.trim())
+    return ids.length > 0 ? ids : null
+  }
+
+  return null
+}
+
 export function validateBookingPayload(
   body: unknown,
   options?: { relaxDateHorizon?: boolean },
@@ -43,7 +63,7 @@ export function validateBookingPayload(
   }
 
   const b = body as Record<string, unknown>
-  const required = ['serviceId', 'barberId', 'date', 'time', 'name', 'phone'] as const
+  const required = ['barberId', 'date', 'time', 'name', 'phone'] as const
 
   for (const key of required) {
     if (!isNonEmptyString(b[key])) {
@@ -74,8 +94,11 @@ export function validateBookingPayload(
     return { ok: false, error: 'Некорректная или недоступная дата' }
   }
 
-  const serviceId = (b.serviceId as string).trim()
-  if (!findService(serviceId)) {
+  const serviceIds = parseServiceIdsFromBody(b)
+  if (!serviceIds) {
+    return { ok: false, error: 'Выберите хотя бы одну услугу' }
+  }
+  if (serviceIds.some((id) => !findService(id))) {
     return { ok: false, error: 'Неизвестная услуга' }
   }
 
@@ -86,7 +109,7 @@ export function validateBookingPayload(
 
   return {
     ok: true,
-    data: { serviceId, barberId, date, time, name, phone },
+    data: { serviceId: serviceIds.join(','), barberId, date, time, name, phone },
   }
 }
 
@@ -161,9 +184,13 @@ export async function createBookingRecord(
   | { ok: true; id: string; telegramOk: boolean; telegramError?: string }
   | { ok: false; error: string; status: number }
 > {
-  const service = findService(data.serviceId)!
+  const summary = summarizeServices(parseServiceIds(data.serviceId))
+  if (!summary) {
+    return { ok: false, error: 'Неизвестная услуга', status: 400 }
+  }
+
   const barber = findBarber(data.barberId)!
-  const durationMinutes = service.duration
+  const { durationMinutes, title: serviceTitle } = summary
   const requireTelegram = options?.requireTelegram !== false
 
   const token = process.env.TELEGRAM_BOT_TOKEN
@@ -203,7 +230,7 @@ export async function createBookingRecord(
     date: data.date,
     startTime: data.time,
     durationMinutes,
-    serviceId: data.serviceId,
+    serviceId: summary.serviceId,
     name: data.name,
     phone: data.phone,
   })
@@ -223,12 +250,12 @@ export async function createBookingRecord(
             '',
             `👤 Клиент: ${data.name}`,
             `📞 Телефон: ${data.phone}`,
-            `💇 Услуга: ${service.title}`,
+            `💇 Услуги: ${serviceTitle}`,
             `💈 Барбер: ${barber.name}`,
             `📅 Дата: ${formatDateRu(data.date)}`,
             `⏰ Время: ${data.time}`,
             `⏱ Длительность: ${durationMinutes} мин`,
-            `💰 Цена: ${formatPrice(service)}`,
+            `💰 Цена: ${formatPrice(summary)}`,
           ].join('\n'),
         }),
       })
@@ -265,15 +292,15 @@ export async function listPublicBookings() {
     .orderBy(asc(bookings.date), asc(bookings.startTime))
 
   return rows.map((row) => {
-    const service = findService(row.serviceId)
+    const summary = summarizeServices(parseServiceIds(row.serviceId))
     const barber = findBarber(row.barberId)
     return {
       ...row,
-      serviceTitle: service?.title ?? row.serviceId,
+      serviceTitle: summary?.title ?? row.serviceId,
       barberName: barber?.name ?? row.barberId,
-      price: service?.price ?? 0,
-      priceMax: service?.priceMax,
-      priceFrom: service?.priceFrom ?? false,
+      price: summary?.price ?? 0,
+      priceMax: summary?.priceMax,
+      priceFrom: summary?.priceFrom ?? false,
       createdAt: row.createdAt.toISOString(),
     }
   })
@@ -287,7 +314,7 @@ export async function listAdminBookings() {
     .orderBy(asc(bookings.date), asc(bookings.startTime))
 
   return rows.map((row) => {
-    const service = findService(row.serviceId)
+    const summary = summarizeServices(parseServiceIds(row.serviceId))
     const barber = findBarber(row.barberId)
     return {
       id: row.id,
@@ -298,11 +325,11 @@ export async function listAdminBookings() {
       durationMinutes: row.durationMinutes,
       name: row.name,
       phone: row.phone,
-      serviceTitle: service?.title ?? row.serviceId,
+      serviceTitle: summary?.title ?? row.serviceId,
       barberName: barber?.name ?? row.barberId,
-      price: service?.price ?? 0,
-      priceMax: service?.priceMax,
-      priceFrom: service?.priceFrom ?? false,
+      price: summary?.price ?? 0,
+      priceMax: summary?.priceMax,
+      priceFrom: summary?.priceFrom ?? false,
       createdAt: row.createdAt.toISOString(),
     }
   })

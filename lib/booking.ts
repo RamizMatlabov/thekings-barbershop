@@ -107,6 +107,46 @@ export function findService(id: string) {
   return services.find((s) => s.id === id) ?? null
 }
 
+/** Split stored `service_id` (single or comma-separated) into unique ids. */
+export function parseServiceIds(value: string): string[] {
+  const seen = new Set<string>()
+  const ids: string[] = []
+  for (const part of value.split(',')) {
+    const id = part.trim()
+    if (!id || seen.has(id)) continue
+    seen.add(id)
+    ids.push(id)
+  }
+  return ids
+}
+
+export function findServices(ids: string[]) {
+  return ids.map((id) => findService(id)).filter((s): s is NonNullable<typeof s> => s != null)
+}
+
+/** Aggregate titles, duration and price for one or more selected services. */
+export function summarizeServices(ids: string[]) {
+  const list = findServices(ids)
+  if (list.length === 0) return null
+
+  const durationMinutes = list.reduce((sum, s) => sum + s.duration, 0)
+  const price = list.reduce((sum, s) => sum + s.price, 0)
+  const priceMaxSum = list.reduce((sum, s) => sum + (s.priceMax ?? s.price), 0)
+  const priceMax = priceMaxSum !== price ? priceMaxSum : undefined
+  const priceFrom = list.some((s) => Boolean(s.priceFrom))
+  const title = list.map((s) => s.title).join(', ')
+
+  return {
+    list,
+    durationMinutes,
+    price,
+    priceMax,
+    priceFrom,
+    title,
+    serviceId: ids.join(','),
+  }
+}
+
 export function findBarber(id: string) {
   return barbers.find((b) => b.id === id) ?? null
 }

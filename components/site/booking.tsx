@@ -8,6 +8,7 @@ import {
   formatDateRu,
   slotOverlapsBusy,
   startOfDay,
+  summarizeServices,
   toISODate,
   type BusyInterval,
 } from '@/lib/booking'
@@ -16,7 +17,7 @@ import { cn } from '@/lib/utils'
 import { Reveal } from './reveal'
 import { SectionHeading } from './section-heading'
 
-const steps = ['Услуга', 'Барбер', 'Дата', 'Время', 'Контакты', 'Подтверждение']
+const steps = ['Услуги', 'Барбер', 'Дата', 'Время', 'Контакты', 'Подтверждение']
 
 const timeSlots = buildTimeSlots()
 
@@ -70,7 +71,7 @@ export function Booking() {
   }, [])
 
   const [step, setStep] = useState(0)
-  const [serviceId, setServiceId] = useState<string>(services[0].id)
+  const [serviceIds, setServiceIds] = useState<string[]>([services[0].id])
   const [barberId, setBarberId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [viewMonth, setViewMonth] = useState(() => ({
@@ -121,7 +122,7 @@ export function Booking() {
   useEffect(() => {
     const onSelect = (e: Event) => {
       const id = (e as CustomEvent<string>).detail
-      setServiceId(id)
+      setServiceIds([id])
       setStep(0)
       setSubmitted(false)
       setSubmitError(null)
@@ -206,18 +207,25 @@ export function Booking() {
     }
   }, [step, barberId, selectedDate])
 
-  const service = services.find((s) => s.id === serviceId)!
+  const selectedSummary = useMemo(() => summarizeServices(serviceIds), [serviceIds])
+  const previewService = selectedSummary?.list[selectedSummary.list.length - 1] ?? services[0]
   const barber = barbers.find((b) => b.id === barberId)
   const phoneValid = phone.replace(/\D/g, '').length >= 12
   const selectedDateObj = selectedDate ? parseISODateLocal(selectedDate) : null
+  const totalDuration = selectedSummary?.durationMinutes ?? 0
 
   const canContinue = [
-    Boolean(serviceId),
+    serviceIds.length > 0,
     Boolean(barberId),
     Boolean(selectedDate),
     Boolean(time),
     name.trim().length >= 2 && phoneValid,
   ][step]
+
+  function toggleService(id: string) {
+    setServiceIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]))
+    setTime(null)
+  }
 
   const minMonth = { year: today.getFullYear(), month: today.getMonth() }
   const maxMonth = { year: maxDate.getFullYear(), month: maxDate.getMonth() }
@@ -266,7 +274,7 @@ export function Booking() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          serviceId: service.id,
+          serviceIds,
           barberId: barber.id,
           date: selectedDate,
           time,
@@ -298,6 +306,7 @@ export function Booking() {
 
   function reset() {
     setStep(0)
+    setServiceIds(['haircut'])
     setBarberId(null)
     setSelectedDate(null)
     setViewMonth({ year: today.getFullYear(), month: today.getMonth() })
@@ -365,36 +374,48 @@ export function Booking() {
           {step === 0 && (
             <div className="grid gap-8 md:grid-cols-[1.2fr_1fr]">
               <fieldset>
-                <legend className="mb-5 text-xs uppercase tracking-[0.2em] text-foreground/80">Выберите услугу</legend>
+                <legend className="mb-5 text-xs uppercase tracking-[0.2em] text-foreground/80">
+                  Выберите услуги
+                </legend>
+                <p className="mb-4 text-xs text-muted-foreground">Можно выбрать несколько услуг сразу</p>
                 <div className="divide-y divide-border border border-border bg-card">
-                  {services.map((s) => (
-                    <label
-                      key={s.id}
-                      className={cn(
-                        'flex cursor-pointer items-center gap-4 px-4 py-4 text-sm transition-colors hover:bg-accent',
-                        serviceId === s.id && 'bg-accent',
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="service"
-                        value={s.id}
-                        checked={serviceId === s.id}
-                        onChange={() => setServiceId(s.id)}
-                        className="size-4 accent-[#c9a46c]"
-                      />
-                      <span className="flex-1">{s.title}</span>
-                      <span className="text-primary">{formatPrice(s)}</span>
-                      <span className="w-14 text-right text-xs text-muted-foreground">{s.duration} мин</span>
-                    </label>
-                  ))}
+                  {services.map((s) => {
+                    const checked = serviceIds.includes(s.id)
+                    return (
+                      <label
+                        key={s.id}
+                        className={cn(
+                          'flex cursor-pointer items-center gap-4 px-4 py-4 text-sm transition-colors hover:bg-accent',
+                          checked && 'bg-accent',
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          name="service"
+                          value={s.id}
+                          checked={checked}
+                          onChange={() => toggleService(s.id)}
+                          className="size-4 accent-[#c9a46c]"
+                        />
+                        <span className="flex-1">{s.title}</span>
+                        <span className="text-primary">{formatPrice(s)}</span>
+                        <span className="w-14 text-right text-xs text-muted-foreground">{s.duration} мин</span>
+                      </label>
+                    )
+                  })}
                 </div>
+                {selectedSummary && serviceIds.length > 0 && (
+                  <p className="mt-4 text-xs text-muted-foreground">
+                    Выбрано: {selectedSummary.title} · {selectedSummary.durationMinutes} мин ·{' '}
+                    <span className="text-primary">{formatPrice(selectedSummary)}</span>
+                  </p>
+                )}
               </fieldset>
               <div className="relative hidden min-h-72 overflow-hidden border border-border md:block">
                 <Image
-                  key={service.image}
-                  src={service.image || '/placeholder.svg'}
-                  alt={service.title}
+                  key={previewService.image}
+                  src={previewService.image || '/placeholder.svg'}
+                  alt={previewService.title}
                   fill
                   sizes="40vw"
                   className="animate-in fade-in zoom-in-105 object-cover duration-700"
@@ -551,7 +572,7 @@ export function Booking() {
                     busyLoading ||
                     busyError != null ||
                     dayBlocked ||
-                    slotOverlapsBusy(slot, service.duration, busyIntervals)
+                    slotOverlapsBusy(slot, totalDuration, busyIntervals)
                   return (
                     <button
                       key={slot}
@@ -628,7 +649,7 @@ export function Booking() {
 
               <dl className="mt-8 grid w-full grid-cols-2 border border-border bg-card text-center sm:grid-cols-5 sm:divide-x sm:divide-border">
                 {[
-                  ['Услуга', service.title],
+                  ['Услуги', selectedSummary?.title ?? ''],
                   ['Барбер', barber.name],
                   ['Дата', longDate.format(selectedDateObj)],
                   ['Время', time],
