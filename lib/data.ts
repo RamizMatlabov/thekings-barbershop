@@ -32,7 +32,7 @@ export const services: Service[] = [
     description: 'Стрижка для детей до 14 лет',
     price: 50000,
     duration: 30,
-    image: '/images/barber-work.png',
+    image: '/images/barber-child.png',
   },
   {
     id: 'clipper',
