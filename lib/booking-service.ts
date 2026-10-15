@@ -94,17 +94,17 @@ export function validateBookingPayload(
     return { ok: false, error: 'Некорректная или недоступная дата' }
   }
 
+  const barberId = (b.barberId as string).trim()
+  if (!findBarber(barberId)) {
+    return { ok: false, error: 'Неизвестный барбер' }
+  }
+
   const serviceIds = parseServiceIdsFromBody(b)
   if (!serviceIds) {
     return { ok: false, error: 'Выберите хотя бы одну услугу' }
   }
-  if (serviceIds.some((id) => !findService(id))) {
+  if (serviceIds.some((id) => !findService(id, barberId))) {
     return { ok: false, error: 'Неизвестная услуга' }
-  }
-
-  const barberId = (b.barberId as string).trim()
-  if (!findBarber(barberId)) {
-    return { ok: false, error: 'Неизвестный барбер' }
   }
 
   return {
@@ -184,7 +184,7 @@ export async function createBookingRecord(
   | { ok: true; id: string; telegramOk: boolean; telegramError?: string }
   | { ok: false; error: string; status: number }
 > {
-  const summary = summarizeServices(parseServiceIds(data.serviceId))
+  const summary = summarizeServices(parseServiceIds(data.serviceId), data.barberId)
   if (!summary) {
     return { ok: false, error: 'Неизвестная услуга', status: 400 }
   }
@@ -292,7 +292,7 @@ export async function listPublicBookings() {
     .orderBy(asc(bookings.date), asc(bookings.startTime))
 
   return rows.map((row) => {
-    const summary = summarizeServices(parseServiceIds(row.serviceId))
+    const summary = summarizeServices(parseServiceIds(row.serviceId), row.barberId)
     const barber = findBarber(row.barberId)
     return {
       ...row,
@@ -314,7 +314,7 @@ export async function listAdminBookings() {
     .orderBy(asc(bookings.date), asc(bookings.startTime))
 
   return rows.map((row) => {
-    const summary = summarizeServices(parseServiceIds(row.serviceId))
+    const summary = summarizeServices(parseServiceIds(row.serviceId), row.barberId)
     const barber = findBarber(row.barberId)
     return {
       id: row.id,

@@ -1,4 +1,4 @@
-import { barbers, services } from '@/lib/data'
+import { barbers, getServicesForBarber } from '@/lib/data'
 
 export const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
 export const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -103,8 +103,8 @@ export function formatDateRu(iso: string): string {
   }).format(date)
 }
 
-export function findService(id: string) {
-  return services.find((s) => s.id === id) ?? null
+export function findService(id: string, barberId?: string | null) {
+  return getServicesForBarber(barberId).find((s) => s.id === id) ?? null
 }
 
 /** Split stored `service_id` (single or comma-separated) into unique ids. */
@@ -120,13 +120,13 @@ export function parseServiceIds(value: string): string[] {
   return ids
 }
 
-export function findServices(ids: string[]) {
-  return ids.map((id) => findService(id)).filter((s): s is NonNullable<typeof s> => s != null)
+export function findServices(ids: string[], barberId?: string | null) {
+  return ids.map((id) => findService(id, barberId)).filter((s): s is NonNullable<typeof s> => s != null)
 }
 
 /** Aggregate titles, duration and price for one or more selected services. */
-export function summarizeServices(ids: string[]) {
-  const list = findServices(ids)
+export function summarizeServices(ids: string[], barberId?: string | null) {
+  const list = findServices(ids, barberId)
   if (list.length === 0) return null
 
   const durationMinutes = list.reduce((sum, s) => sum + s.duration, 0)

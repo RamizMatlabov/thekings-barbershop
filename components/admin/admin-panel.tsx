@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { buildTimeSlots, formatDateRu } from '@/lib/booking'
-import { barbers, formatPrice, services } from '@/lib/data'
+import { barbers, formatPrice, getServicesForBarber, services } from '@/lib/data'
 import { cn } from '@/lib/utils'
 
 type AdminBooking = {
@@ -377,7 +377,17 @@ export function AdminPanel() {
               Барбер
               <select
                 value={createForm.barberId}
-                onChange={(e) => setCreateForm((p) => ({ ...p, barberId: e.target.value }))}
+                onChange={(e) => {
+                  const nextBarberId = e.target.value
+                  const available = getServicesForBarber(nextBarberId)
+                  setCreateForm((p) => ({
+                    ...p,
+                    barberId: nextBarberId,
+                    serviceId: available.some((s) => s.id === p.serviceId)
+                      ? p.serviceId
+                      : (available[0]?.id ?? ''),
+                  }))
+                }}
                 className={fieldClass}
                 required
               >
@@ -397,7 +407,7 @@ export function AdminPanel() {
                 className={fieldClass}
                 required
               >
-                {services.map((s) => (
+                {getServicesForBarber(createForm.barberId).map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.title} ({formatPrice(s)})
                   </option>

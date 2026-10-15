@@ -12,7 +12,7 @@ import {
   toISODate,
   type BusyInterval,
 } from '@/lib/booking'
-import { barbers, formatPrice, SELECT_SERVICE_EVENT, services } from '@/lib/data'
+import { barbers, formatPrice, getServicesForBarber, SELECT_SERVICE_EVENT, services } from '@/lib/data'
 import { cn } from '@/lib/utils'
 import { Reveal } from './reveal'
 import { SectionHeading } from './section-heading'
@@ -71,7 +71,7 @@ export function Booking() {
   }, [])
 
   const [step, setStep] = useState(0)
-  const [serviceIds, setServiceIds] = useState<string[]>([services[0].id])
+  const [serviceIds, setServiceIds] = useState<string[]>([])
   const [barberId, setBarberId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [viewMonth, setViewMonth] = useState(() => ({
@@ -122,10 +122,20 @@ export function Booking() {
   useEffect(() => {
     const onSelect = (e: Event) => {
       const id = (e as CustomEvent<string>).detail
-      setServiceIds([id])
-      setStep(1)
       setSubmitted(false)
       setSubmitError(null)
+      setBarberId((currentBarber) => {
+        const available = getServicesForBarber(currentBarber)
+        const offered = available.some((s) => s.id === id)
+        if (currentBarber && offered) {
+          setServiceIds([id])
+          setStep(1)
+          return currentBarber
+        }
+        setServiceIds([id])
+        setStep(0)
+        return null
+      })
     }
     window.addEventListener(SELECT_SERVICE_EVENT, onSelect)
     return () => window.removeEventListener(SELECT_SERVICE_EVENT, onSelect)
@@ -207,8 +217,9 @@ export function Booking() {
     }
   }, [step, barberId, selectedDate])
 
-  const selectedSummary = useMemo(() => summarizeServices(serviceIds), [serviceIds])
-  const previewService = selectedSummary?.list[selectedSummary.list.length - 1] ?? services[0]
+  const barberServices = useMemo(() => getServicesForBarber(barberId), [barberId])
+  const selectedSummary = useMemo(() => summarizeServices(serviceIds, barberId), [serviceIds, barberId])
+  const previewService = selectedSummary?.list[selectedSummary.list.length - 1] ?? barberServices[0] ?? services[0]
   const barber = barbers.find((b) => b.id === barberId)
   const phoneValid = phone.replace(/\D/g, '').length >= 12
   const selectedDateObj = selectedDate ? parseISODateLocal(selectedDate) : null
@@ -306,7 +317,7 @@ export function Booking() {
 
   function reset() {
     setStep(0)
-    setServiceIds(['haircut'])
+    setServiceIds([])
     setBarberId(null)
     setSelectedDate(null)
     setViewMonth({ year: today.getFullYear(), month: today.getMonth() })
@@ -380,7 +391,12 @@ export function Booking() {
                     key={b.id}
                     type="button"
                     onClick={() => {
+                      const available = getServicesForBarber(b.id)
                       setBarberId(b.id)
+                      setServiceIds((prev) => {
+                        const kept = prev.filter((id) => available.some((s) => s.id === id))
+                        return kept.length > 0 ? kept : available[0] ? [available[0].id] : []
+                      })
                       setSelectedDate(null)
                       setTime(null)
                       setBlockedDates(new Set())
@@ -419,7 +435,7 @@ export function Booking() {
                 </legend>
                 <p className="mb-4 text-xs text-muted-foreground">Можно выбрать несколько услуг сразу</p>
                 <div className="divide-y divide-border border border-border bg-card">
-                  {services.map((s) => {
+                  {barberServices.map((s) => {
                     const checked = serviceIds.includes(s.id)
                     return (
                       <label

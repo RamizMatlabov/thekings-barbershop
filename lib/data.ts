@@ -117,6 +117,26 @@ export const barbers = [
   { id: 'daler', name: 'Хамидов Далер', role: 'Барбер', experience: 'Опыт: 14 лет', image: '/images/barber2.png' },
 ]
 
+/** Per-barber price overrides. Other services stay on the default catalog. */
+const barberPriceOverrides: Record<string, Record<string, Pick<Service, 'price' | 'priceMax' | 'priceFrom'>>> = {
+  daler: {
+    haircut: { price: 100000 },
+    'kids-haircut': { price: 70000 },
+    clipper: { price: 50000 },
+    wedding: { price: 600000 },
+  },
+}
+
+export function getServicesForBarber(barberId: string | null | undefined): Service[] {
+  const overrides = barberId ? barberPriceOverrides[barberId] : undefined
+  if (!overrides) return services
+  return services.map((service) => {
+    const override = overrides[service.id]
+    if (!override) return service
+    return { ...service, ...override, priceMax: override.priceMax }
+  })
+}
+
 function formatAmount(value: number) {
   return value.toLocaleString('ru-RU').replace(/\u00a0/g, ' ')
 }
