@@ -41,10 +41,10 @@ export function Hero() {
             Записаться
           </a>
           <a
-            href="#services"
+            href="#about"
             className="border border-foreground/40 px-8 py-4 text-xs font-semibold uppercase tracking-[0.22em] text-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-primary hover:text-primary"
           >
-            Наши услуги
+            О нас
           </a>
         </div>
       </div>

@@ -1,8 +1,7 @@
 export const navLinks = [
   { href: '#home', label: 'Главная' },
   { href: '#about', label: 'О нас' },
-  { href: '#services', label: 'Услуги' },
-  { href: '#booking', label: 'Прайс' },
+  { href: '#booking', label: 'Запись' },
   { href: '#contacts', label: 'Контакты' },
 ]
 
