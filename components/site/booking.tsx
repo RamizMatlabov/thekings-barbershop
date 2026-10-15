@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils'
 import { Reveal } from './reveal'
 import { SectionHeading } from './section-heading'
 
-const steps = ['Услуги', 'Барбер', 'Дата', 'Время', 'Контакты', 'Подтверждение']
+const steps = ['Барбер', 'Услуги', 'Дата', 'Время', 'Контакты', 'Подтверждение']
 
 const timeSlots = buildTimeSlots()
 
@@ -123,7 +123,7 @@ export function Booking() {
     const onSelect = (e: Event) => {
       const id = (e as CustomEvent<string>).detail
       setServiceIds([id])
-      setStep(0)
+      setStep(1)
       setSubmitted(false)
       setSubmitError(null)
     }
@@ -215,8 +215,8 @@ export function Booking() {
   const totalDuration = selectedSummary?.durationMinutes ?? 0
 
   const canContinue = [
-    serviceIds.length > 0,
     Boolean(barberId),
+    serviceIds.length > 0,
     Boolean(selectedDate),
     Boolean(time),
     name.trim().length >= 2 && phoneValid,
@@ -372,6 +372,46 @@ export function Booking() {
 
         <div key={step} className="animate-in fade-in slide-in-from-bottom-4 mt-12 duration-500">
           {step === 0 && (
+            <fieldset>
+              <legend className="mb-5 text-xs uppercase tracking-[0.2em] text-foreground/80">Выберите барбера</legend>
+              <div className="mx-auto grid max-w-xl grid-cols-2 gap-4">
+                {barbers.map((b) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => {
+                      setBarberId(b.id)
+                      setSelectedDate(null)
+                      setTime(null)
+                      setBlockedDates(new Set())
+                    }}
+                    aria-pressed={barberId === b.id}
+                    className={cn(
+                      'group overflow-hidden border bg-card text-center transition-all duration-300 hover:-translate-y-1',
+                      barberId === b.id ? 'border-primary shadow-[0_0_0_1px_#c9a46c]' : 'border-border hover:border-primary/50',
+                    )}
+                  >
+                    <div className="relative aspect-[4/5] overflow-hidden">
+                      <Image
+                        src={b.image || '/placeholder.svg'}
+                        alt={`Барбер ${b.name}`}
+                        fill
+                        sizes="(min-width: 768px) 25vw, 50vw"
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="px-3 py-4">
+                      <p className="font-serif text-lg uppercase tracking-[0.12em] text-[#e9e1d3]">{b.name}</p>
+                      <p className="mt-1 text-xs text-primary">{b.role}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{b.experience}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          )}
+
+          {step === 1 && (
             <div className="grid gap-8 md:grid-cols-[1.2fr_1fr]">
               <fieldset>
                 <legend className="mb-5 text-xs uppercase tracking-[0.2em] text-foreground/80">
@@ -422,46 +462,6 @@ export function Booking() {
                 />
               </div>
             </div>
-          )}
-
-          {step === 1 && (
-            <fieldset>
-              <legend className="mb-5 text-xs uppercase tracking-[0.2em] text-foreground/80">Выберите барбера</legend>
-              <div className="mx-auto grid max-w-xl grid-cols-2 gap-4">
-                {barbers.map((b) => (
-                  <button
-                    key={b.id}
-                    type="button"
-                    onClick={() => {
-                      setBarberId(b.id)
-                      setSelectedDate(null)
-                      setTime(null)
-                      setBlockedDates(new Set())
-                    }}
-                    aria-pressed={barberId === b.id}
-                    className={cn(
-                      'group overflow-hidden border bg-card text-center transition-all duration-300 hover:-translate-y-1',
-                      barberId === b.id ? 'border-primary shadow-[0_0_0_1px_#c9a46c]' : 'border-border hover:border-primary/50',
-                    )}
-                  >
-                    <div className="relative aspect-[4/5] overflow-hidden">
-                      <Image
-                        src={b.image || '/placeholder.svg'}
-                        alt={`Барбер ${b.name}`}
-                        fill
-                        sizes="(min-width: 768px) 25vw, 50vw"
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                    </div>
-                    <div className="px-3 py-4">
-                      <p className="font-serif text-lg uppercase tracking-[0.12em] text-[#e9e1d3]">{b.name}</p>
-                      <p className="mt-1 text-xs text-primary">{b.role}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{b.experience}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </fieldset>
           )}
 
           {step === 2 && (
