@@ -4,8 +4,10 @@ import Image from 'next/image'
 import { useEffect, useMemo, useState } from 'react'
 import {
   BOOKING_HORIZON_MONTHS,
+  availableTimeSlotsForDate,
   buildTimeSlots,
   formatDateRu,
+  isTimeSlotInPast,
   slotOverlapsBusy,
   startOfDay,
   summarizeServices,
@@ -179,6 +181,12 @@ export function Booking() {
   }, [blockedDates, selectedDate])
 
   useEffect(() => {
+    if (time && selectedDate && isTimeSlotInPast(selectedDate, time)) {
+      setTime(null)
+    }
+  }, [time, selectedDate])
+
+  useEffect(() => {
     if (step !== 3 || !barberId || !selectedDate) return
 
     let cancelled = false
@@ -224,6 +232,7 @@ export function Booking() {
   const phoneValid = phone.replace(/\D/g, '').length >= 12
   const selectedDateObj = selectedDate ? parseISODateLocal(selectedDate) : null
   const totalDuration = selectedSummary?.durationMinutes ?? 0
+  const visibleTimeSlots = selectedDate ? availableTimeSlotsForDate(selectedDate) : timeSlots
 
   const canContinue = [
     Boolean(barberId),
@@ -582,8 +591,13 @@ export function Booking() {
                   Барбер недоступен в этот день
                 </p>
               )}
+              {!dayBlocked && !busyError && visibleTimeSlots.length === 0 && (
+                <p className="mb-4 text-center text-sm text-muted-foreground" role="status">
+                  На сегодня свободных слотов уже нет. Выберите другую дату.
+                </p>
+              )}
               <div className="grid grid-cols-3 gap-3 sm:grid-cols-6 md:grid-cols-8">
-                {timeSlots.map((slot) => {
+                {visibleTimeSlots.map((slot) => {
                   const busy =
                     busyLoading ||
                     busyError != null ||

@@ -27,6 +27,22 @@ export function isValidTimeSlot(time: string): boolean {
   return buildTimeSlots().includes(time)
 }
 
+/** Slot start is already in the past for this calendar date (local time). */
+export function isTimeSlotInPast(dateIso: string, time: string, now = new Date()): boolean {
+  if (!isValidTimeSlot(time)) return true
+  const date = parseISODate(dateIso)
+  if (!date) return true
+  if (startOfDay(date).getTime() > startOfDay(now).getTime()) return false
+  if (startOfDay(date).getTime() < startOfDay(now).getTime()) return true
+  const start = timeToMinutes(time)
+  const nowMinutes = now.getHours() * 60 + now.getMinutes()
+  return start <= nowMinutes
+}
+
+export function availableTimeSlotsForDate(dateIso: string, now = new Date()): string[] {
+  return buildTimeSlots().filter((slot) => !isTimeSlotInPast(dateIso, slot, now))
+}
+
 export type BusyInterval = {
   startTime: string
   durationMinutes: number

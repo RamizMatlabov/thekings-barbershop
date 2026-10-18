@@ -7,6 +7,7 @@ import {
   findService,
   formatDateRu,
   isDateBookable,
+  isTimeSlotInPast,
   isValidTimeSlot,
   parseServiceIds,
   slotOverlapsBusy,
@@ -92,6 +93,9 @@ export function validateBookingPayload(
   }
   if (!options?.relaxDateHorizon && !isDateBookable(date)) {
     return { ok: false, error: 'Некорректная или недоступная дата' }
+  }
+  if (!options?.relaxDateHorizon && isTimeSlotInPast(date, time)) {
+    return { ok: false, error: 'Это время уже прошло. Выберите другой слот.' }
   }
 
   const barberId = (b.barberId as string).trim()
